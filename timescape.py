@@ -169,6 +169,22 @@ class timescape:
         t = self.tex(z) # Time
         return ( 2 + self.fv(t) ) / ( 3*t ) # Eq. B6 Average observational quantities in the timescape cosmology
     
+    def H_dressed(self, z):
+        '''
+        Parameters
+        ----------
+        z : Array of floats
+               CMB Redshift.
+ 
+        Returns
+        -------
+        Float
+            Dressed Hubble Parameter.
+        '''
+       
+        t = self.tex(z) # Time
+        return ( 4*self.fv_t(t)**2 + self.fv_t(t) +4 ) / ( 6*t ) # Eq. B8 Average observational quantities in the timescape cosmology
+    
     def b(self):
         '''
         Returns
