@@ -181,6 +181,41 @@ class timescape:
        
         t = self.tex(z) # Time
         return ( 4*self.fv_t(t)**2 + self.fv_t(t) +4 ) / ( 6*t ) # Eq. B8 Average observational quantities in the timescape cosmology
+    
+    def q_bare(self, z):
+        '''
+        Parameters
+        ----------
+        z : Array of floats
+            CMB Redshift.
+
+        Returns
+        -------
+        Float
+            Bare Deceleration Parameter.
+        '''
+
+        return 2 * (1 - self.fv(self.tex(z)))**2 / (2 + self.fv(self.tex(z)))**2 # Eq. 58 ArXiv: 1311.3787
+    
+    def q_dressed(self, z):
+        '''
+        Parameters
+        ----------
+        z : Array of floats
+            CMB Redshift.
+
+        Returns
+        -------
+        Float
+            Dressed Deceleration Parameter.
+        '''
+
+        t = self.tex(z)
+
+        numerator = - (1 - self.fv(t)) * (8*self.fv(t)**3 + 39*self.fv(t)**2 - 12*self.fv(t) - 8)
+        denominator = (4 + 4*self.fv(t)**2 + self.fv(t))**2
+
+        return numerator/denominator
 
     def _F(self, z):
 
