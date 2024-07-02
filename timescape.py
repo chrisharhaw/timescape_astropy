@@ -161,7 +161,13 @@ class timescape:
         t = self.tex(z2)
         distance = self.c * t**(2/3.) * (self.F(z1) - self.F(z2))
         return distance * u.Mpc
-    
+
+    def void_fraction_to_dressed_matter(self):
+        self.om0_dressed = 0.5 * ( 1 - self.fv0 ) * ( 2 + self.fv0 )
+        
+    def dressed_matter_to_void_fraction(self):
+        self.fv0 = 0.5 * ( np.sqrt(9-8*self.om0_dressed) - 1 )  
+
 
 if __name__ == '__main__':
     H0 = 61.7 # dressed H0 value
