@@ -5,7 +5,7 @@ Created on Wed Feb 21 14:29:50 2024
 @author: zgl12 + cha227 
 """
 
-import sys
+
 import numpy as np
 from math import exp, floor, log, pi, sqrt
 from scipy import integrate,optimize
@@ -45,19 +45,28 @@ class timescape:
             Dressed Hubble Parameter at present time.
         '''
 
+        #Void Fraction at Present Time
+        self.fv0 = fv0 
 
-        self.fv0 = fv0 # Void Fraction
-        self.H0 = H0 # Dressed Hubble Parameter
+        if H0_type.lower() == 'bare':
+            self.H0_bare = H0
+            self.H0_dressed = (4*self.fv0**2 + self.fv0 + 4) * self.H0_bare / (2 * (2 + self.fv0))
+        elif H0_type.lower() == 'dressed':
+            self.H0_dressed = H0
+            self.H0_bare = (2 * (2 + self.fv0) * self.H0_dressed) / (4*self.fv0**2 + self.fv0 + 4)
+        else:
+            raise ValueError("H0_type must be either 'bare' or 'dressed'")
+        
 
+        #Present Bare Density Parameters
+        self.Om0_bare = self.Om_bare(0)
+        self.Ok0_bare = self.Ok_bare(0)
+        self.OQ0_bare = self.OQ_bare(0)
 
-        #Present Cosmological Parameters
-
-        #Bare Hubble parameter
-        self.Hbar0 = (2 * (2 + self.fv0) * self.H0) / (4*self.fv0**2 + self.fv0 + 4) 
-
-        #Dressed Present Matter Density
-        self.om0_dressed = 0.5 * ( 1 - self.fv0 ) * ( 2 + self.fv0 )
-
+        #Present Dressed Density Parameters
+        self.Om0_dressed = self.Om0_bare * self._lapse_function(0)**3
+        self.Ok0_dressed = self.Ok0_bare * self._lapse_function(0)**3
+        self.OQ0_dressed = self.OQ0_bare * self._lapse_function(0)**3
         
 
 
@@ -65,11 +74,9 @@ class timescape:
         self.t0 = (2.0 /3) + (self.fv0 / 3.0)
         
 
-
-
     #Present Void Fraction in terms of Dressed Matter Density
     def dressed_matter_to_void_fraction(self):
-        self.fv0 = 0.5 * ( np.sqrt(9-8*self.om0_dressed) - 1 )
+        self.fv0 = 0.5 * ( np.sqrt(9-8*self.Om0_dressed) - 1 )
 
     def z1(self, t):
         '''
@@ -83,7 +90,7 @@ class timescape:
             The cosmological redshift function for the time. 
         '''
         fv = self.fv(t)
-        return (2+fv)*fv**(1/3) / ( 3*t* self.Hbar0*self.fv0**(1/3) ) # Eq. 38 Average observational quantities in the timescape cosmology
+        return (2+fv)*fv**(1/3) / ( 3*t* self.H0_bare*self.fv0**(1/3) ) # Eq. 38 Average observational quantities in the timescape cosmology
 
     # Define the texer function
     def tex(self, z):
@@ -122,7 +129,7 @@ class timescape:
             Tracker soln as function of time.
         '''
         
-        x = 3 * self.fv0 * t * self.Hbar0 
+        x = 3 * self.fv0 * t * self.H0_bare
         return x /(x + (1.-self.fv0)*(2.+self.fv0)) # Eq. B2 Average observational quantities in the timescape cosmology
 
     def H_bare(self, z):
@@ -148,7 +155,7 @@ class timescape:
             b parameter.
             Eq.39 Average observational quantities in the timescape cosmology
         '''
-        return (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.Hbar0) 
+        return (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.H0_bare) 
     
     def F(self, z):
         '''
