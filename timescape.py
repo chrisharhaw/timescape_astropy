@@ -78,19 +78,41 @@ class timescape:
     def dressed_matter_to_void_fraction(self):
         self.fv0 = 0.5 * ( np.sqrt(9-8*self.Om0_dressed) - 1 )
 
-    def z1(self, t):
-        '''
-        Parameters
-        ----------
-        t : Time in billion years.
+    def Om_bare(self, z):
+        return 4* (1 - self.fv(self.tex(z))) / (2 + self.fv(self.tex(z)))**2 # Eq. B3 Average observational quantities in the timescape cosmology
 
-        Returns
-        -------
-        Float
-            The cosmological redshift function for the time. 
-        '''
-        fv = self.fv(t)
-        return (2+fv)*fv**(1/3) / ( 3*t* self.H0_bare*self.fv0**(1/3) ) # Eq. 38 Average observational quantities in the timescape cosmology
+    def Ok_bare(self, z):
+        return 9 * self.fv(self.tex(z)) / (2 + self.fv(self.tex(z)))**2 # Eq. B4 Average observational quantities in the timescape cosmology
+    
+    def OQ_bare(self, z):
+        return -self.fv(self.tex(z)) * (1 - self.fv(self.tex(z)))  / (2 + self.fv(self.tex(z)))**2 # Eq. B5 Average observational quantities in the timescape cosmology
+    
+    def Om_dressed(self, z):
+        return self.Om_bare(z) * self._lapse_function(z)**3
+    
+    def Ok_dressed(self, z):
+        return self.Ok_bare(z) * self._lapse_function(z)**3
+
+    def OQ_dressed(self, z):
+        return self.OQ_bare(z) * self._lapse_function(z)**3
+
+    def _lapse_function(self, z):
+        return 0.5*(2 + self.fv(self.tex(z))) # Eq. B7 Average observational quantities in the timescape cosmology
+
+      
+    def z1(self, t):
+      '''
+      Parameters
+      ----------
+      t : Time in billion years.
+
+      Returns
+      -------
+      Float
+          The cosmological redshift function for the time. 
+      '''
+      fv = self.fv(t)
+      return (2+fv)*fv**(1/3) / ( 3*t* self.H0_bare*self.fv0**(1/3) ) # Eq. 38 Average observational quantities in the timescape cosmology
 
     # Define the texer function
     def tex(self, z):
@@ -175,7 +197,7 @@ class timescape:
         term3 = (self.b**(1/3.)/np.sqrt(3)) * np.arctan( (2*t**(1/3.) - self.b**(1/3.)) / (np.sqrt(3) * self.b**(1/3.)) )
         return term1 + term2 + term3
 
-    def angular_diameter_distance(self, z, z1=0): #arrange these distacnes so users can call either
+    def angular_diameter_distance(self, z, z_2=0): #arrange these distacnes so users can call either
         '''
         Parameters
         ----------
@@ -188,24 +210,24 @@ class timescape:
             Angular Diameter Distance.
         '''
         t = self.tex(z)
-        distance = const.c.to('km/s').value * t**(2/3.) * (self.F(z1) - self.F(z)) 
+        distance = const.c.to('km/s').value * t**(2/3.) * (self.F(z_2) - self.F(z)) 
         
         return distance * u.Mpc
     
-    def angular_diameter_distance_z1z2(self, z1, z2):
+    def angular_diameter_distance_z1z2(self, z_1, z_2):
         '''
         Parameters
         ----------
-        z1: redshift of lens
-        z2: redshift of source
+        z_1: redshift of lens
+        z_2: redshift of source
 
         Returns
         -------
         Float
-            Angular Diameter Distance between z1 and z2.
+            Angular Diameter Distance between z_1 and z_2.
         '''
         
-        return self.angular_diameter_distance(z1, z2)
+        return self.angular_diameter_distance(z_1, z_2)
     
     def transverse_comoving_distance(self, z):
         '''
