@@ -165,7 +165,7 @@ class timescape:
 
 if __name__ == '__main__':
     H0 = 61.7 # dressed H0 value
-    fv0 = 0.695 # Void Fraction at present time
+    fv0 = 0.73 # Void Fraction at present time
     ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
     
 
