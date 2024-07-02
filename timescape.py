@@ -69,15 +69,11 @@ class timescape:
         self.OQ0_dressed = self.OQ0_bare * self._lapse_function(0)**3
         
 
-
-        self.b = self.b() # b parameter
+        self.b = (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.H0_bare)  # b parameter
         self.t0 = (2.0 /3) + (self.fv0 / 3.0)
         
 
-    #Present Void Fraction in terms of Dressed Matter Density
-    def dressed_matter_to_void_fraction(self):
-        self.fv0 = 0.5 * ( np.sqrt(9-8*self.Om0_dressed) - 1 )
-
+    #Energy densities for dressed and bare parameters
     def Om_bare(self, z):
         return 4* (1 - self.fv(self.tex(z))) / (2 + self.fv(self.tex(z)))**2 # Eq. B3 Average observational quantities in the timescape cosmology
 
@@ -133,7 +129,7 @@ class timescape:
         result = root_scalar(func, bracket=[0.0001, 1])  # Adjust the bracket if needed
         return result.root
     
-    def yin(self,yy):
+    def _yin(self,yy):
         yin = ((2 * yy) + (self.b / 6) * (np.log(((yy + self.b) ** 2) / ((yy ** 2) + (self.b ** 2) - yy * self.b)))
             + ((self.b / (3 ** 0.5)) * np.arctan((2 * yy - self.b) / ((3 ** 0.5) * self.b))))
         return yin
@@ -169,6 +165,7 @@ class timescape:
         t = self.tex(z) # Time
         return ( 2 + self.fv(t) ) / ( 3*t ) # Eq. B6 Average observational quantities in the timescape cosmology
     
+
     def H_dressed(self, z):
         '''
         Parameters
@@ -184,18 +181,9 @@ class timescape:
        
         t = self.tex(z) # Time
         return ( 4*self.fv_t(t)**2 + self.fv_t(t) +4 ) / ( 6*t ) # Eq. B8 Average observational quantities in the timescape cosmology
-    
-    def b(self):
-        '''
-        Returns
-        -------
-        Float
-            b parameter.
-            Eq.39 Average observational quantities in the timescape cosmology
-        '''
-        return (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.H0_bare) 
-    
-    def F(self, z):
+
+    def _F(self, z):
+
         '''
         Parameters
         ----------
@@ -226,7 +214,7 @@ class timescape:
             Angular Diameter Distance.
         '''
         t = self.tex(z)
-        distance = const.c.to('km/s').value * t**(2/3.) * (self.F(z_2) - self.F(z)) 
+        distance = const.c.to('km/s').value * t**(2/3.) * (self._F(z_2) - self._F(z)) 
         
         return distance * u.Mpc
     
@@ -283,7 +271,7 @@ class timescape:
 
 if __name__ == '__main__':
     H0 = 61.7 # dressed H0 value
-    fv0 = 0.73 # Void Fraction at present time
+    fv0 = 0.695 # Void Fraction at present time
     ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
     
 
