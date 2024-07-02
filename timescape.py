@@ -34,7 +34,7 @@ _kB_evK = const.k_B.to(u.eV / u.K)
 ############################################################################################################
 
 class timescape:
-    def __init__(self, fv0, H0):
+    def __init__(self, fv0 = 0.695, H0 = 61.7, H0_type = 'dressed'):
         '''
         Parameters
         ----------
@@ -198,9 +198,38 @@ class timescape:
             Angular Diameter Distance between z1 and z2.
         '''
         
-        t = self.tex(z2)
-        distance = self.c * t**(2/3.) * (self.F(z1) - self.F(z2))
-        return distance * u.Mpc
+        return self.angular_diameter_distance(z1, z2)
+    
+    def transverse_comoving_distance(self, z):
+        '''
+        Parameters
+        ----------
+        z : Array of floats
+            Redshift.
+
+        Returns
+        -------
+        Transverse Comoving Distance: Float
+            Angular Diameter Distance between z1 and z2.
+        '''
+        
+        return self.angular_diameter_distance(z) * (1+z)
+    
+    def luminosity_distance(self, z):
+        '''
+        Parameters
+        ----------
+        z : Array of floats
+            Redshift.
+
+        Returns
+        -------
+        Luminosity Distance: Float
+            Luminosity Distance.
+        '''
+        
+        return self.angular_diameter_distance(z) * (1+z)**2
+
 
    
         
