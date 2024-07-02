@@ -2,34 +2,74 @@
 """
 Created on Wed Feb 21 14:29:50 2024
 
-@author: zgl12 + cha227
+@author: zgl12 + cha227 
 """
 
 import sys
-from astropy import units as u
 import numpy as np
+from math import exp, floor, log, pi, sqrt
 from scipy import integrate,optimize
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve, root_scalar
 
+from astropy import units as u
+import astropy.constants as const
 
+############################################################################################################
+# Unit Conversions and Constants
+
+_H0units_to_invs = (u.km / (u.s * u.Mpc)).to(1.0 / u.s)
+_sec_to_Gyr = u.s.to(u.Gyr)
+# const in critical density in cgs units (g cm^-3)
+_critdens_const = (3 / (8 * pi * const.G)).cgs.value
+# angle conversions
+_radian_in_arcsec = (1 * u.rad).to(u.arcsec)
+_radian_in_arcmin = (1 * u.rad).to(u.arcmin)
+# Radiation parameter over c^2 in cgs (g cm^-3 K^-4)
+_a_B_c2 = (4 * const.sigma_sb / const.c**3).cgs.value
+# Boltzmann constant in eV / K
+_kB_evK = const.k_B.to(u.eV / u.K)
+
+
+############################################################################################################
 
 class timescape:
-    
     def __init__(self, fv0, H0):
+        '''
+        Parameters
+        ----------
+        fv0 : Float
+            Void Fraction at present time.
+        
+        H0 : Float
+            Dressed Hubble Parameter at present time.
+        '''
+
 
         self.fv0 = fv0 # Void Fraction
         self.H0 = H0 # Dressed Hubble Parameter
-        self.c = 2.99792458e5 # Speed of Light km s^-1
-        self.Hbar0 = (2 * (2 + self.fv0) * self.H0) / (4*self.fv0**2 + self.fv0 + 4) #bare Hubble parameter
+
+
+        #Present Cosmological Parameters
+
+        #Bare Hubble parameter
+        self.Hbar0 = (2 * (2 + self.fv0) * self.H0) / (4*self.fv0**2 + self.fv0 + 4) 
+
+        #Dressed Present Matter Density
+        self.om0_dressed = 0.5 * ( 1 - self.fv0 ) * ( 2 + self.fv0 )
+
+        
+
+
         self.b = self.b() # b parameter
         self.t0 = (2.0 /3) + (self.fv0 / 3.0)
         
-        km_per_Mpc = 3.2407792896664E-20 # Ratio for converting km/Mpc
-        s_to_billion_years = 1/ (1e9 * 365.25 * 24 * 60 * 60) # Seconds to Billion Years
-        self.adjustment = km_per_Mpc / s_to_billion_years # Adjustment Factor to make units [Byr^{-1}]
-        self.H0a = H0 * self.adjustment # Adjusted H0 [Byr^{-1}]
-        self.Hbar0a = self.Hbar0 * self.adjustment # Adjusted Hbar0 [Byr^{-1}]
+
+
+
+    #Present Void Fraction in terms of Dressed Matter Density
+    def dressed_matter_to_void_fraction(self):
+        self.fv0 = 0.5 * ( np.sqrt(9-8*self.om0_dressed) - 1 )
 
     def z1(self, t):
         '''
@@ -141,7 +181,7 @@ class timescape:
             Angular Diameter Distance.
         '''
         t = self.tex(z)
-        distance = self.c * t**(2/3.) * (self.F(z1) - self.F(z))
+        distance = const.c.to('km/s').value * t**(2/3.) * (self.F(z1) - self.F(z)) 
         
         return distance * u.Mpc
     
@@ -162,11 +202,9 @@ class timescape:
         distance = self.c * t**(2/3.) * (self.F(z1) - self.F(z2))
         return distance * u.Mpc
 
-    def void_fraction_to_dressed_matter(self):
-        self.om0_dressed = 0.5 * ( 1 - self.fv0 ) * ( 2 + self.fv0 )
+   
         
-    def dressed_matter_to_void_fraction(self):
-        self.fv0 = 0.5 * ( np.sqrt(9-8*self.om0_dressed) - 1 )  
+    
 
 
 if __name__ == '__main__':
