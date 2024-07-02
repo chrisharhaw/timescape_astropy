@@ -16,7 +16,7 @@ from scipy.optimize import fsolve, root_scalar
 
 class timescape:
     
-    def __init__(self, fv0, H0):
+    def __init__(self, fv0 = 0.695, H0 = 61.7, H0_type = 'dressed'):
 
         self.fv0 = fv0 # Void Fraction
         self.H0 = H0 # Dressed Hubble Parameter
@@ -158,14 +158,43 @@ class timescape:
             Angular Diameter Distance between z1 and z2.
         '''
         
-        t = self.tex(z2)
-        distance = self.c * t**(2/3.) * (self.F(z1) - self.F(z2))
-        return distance * u.Mpc
+        return self.angular_diameter_distance(z1, z2)
+    
+    def transverse_comoving_distance(self, z):
+        '''
+        Parameters
+        ----------
+        z : Array of floats
+            Redshift.
 
-    def void_fraction_to_dressed_matter(self):
+        Returns
+        -------
+        Transverse Comoving Distance: Float
+            Angular Diameter Distance between z1 and z2.
+        '''
+        
+        return self.angular_diameter_distance(z) * (1+z)
+    
+    def luminosity_distance(self, z):
+        '''
+        Parameters
+        ----------
+        z : Array of floats
+            Redshift.
+
+        Returns
+        -------
+        Luminosity Distance: Float
+            Luminosity Distance.
+        '''
+        
+        return self.angular_diameter_distance(z) * (1+z)**2
+
+
+    def void_fraction0_to_dressed_matter0(self):
         self.om0_dressed = 0.5 * ( 1 - self.fv0 ) * ( 2 + self.fv0 )
         
-    def dressed_matter_to_void_fraction(self):
+    def dressed_matter0_to_void_fraction0(self):
         self.fv0 = 0.5 * ( np.sqrt(9-8*self.om0_dressed) - 1 )  
 
 
