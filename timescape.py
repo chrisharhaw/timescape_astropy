@@ -106,8 +106,9 @@ class timescape:
         -------
         Float
             b parameter.
+            Eq.39 Average observational quantities in the timescape cosmology
         '''
-        return (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.Hbar0) #Eq.39 Average observational quantities in the timescape cosmology
+        return (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.Hbar0) 
     
     def F(self, z):
         '''
@@ -118,10 +119,9 @@ class timescape:
         Returns
         -------
         Float
-            F function.
-
+            F function 
+            Eqn.41 Average observational quantities in the timescape cosmology
         '''
-
         t = self.tex(z)
         term1 = 2.*t**(1/3.)
         term2 = (self.b**(1/3.) /6.)*np.log( (t**(1/3.) + self.b**(1/3.))**2 / (-self.b**(1/3.)*t**(1/3.) + self.b**(2/3.) + t**(2/3.)) )
