@@ -138,7 +138,7 @@ class timescape:
         Returns
         -------
         Float
-            Time in Gyr.
+            Gives the age of the universe at a given redshift for a wall observer.
         '''
         t = self._tex(z) / _H0units_to_invs * _sec_to_Gyr
         term1 = 2.0 *t /3.0
@@ -146,6 +146,20 @@ class timescape:
         term3 = log(1.0 + (9.0*self.fv0 * self.H0_bare * _H0units_to_invs * t / _sec_to_Gyr) / (4.0 * self.Om0_dressed))
         tau = term1 + term2 * term3
         return tau
+    
+    def volume_average_time(self, z):
+        '''
+        Parameters
+        ----------
+        z : redshift
+
+        Returns
+        -------
+        Float
+            Gives the volume average age of the universe at a given redshift.
+        '''
+        t = self._tex(z) / _H0units_to_invs * _sec_to_Gyr
+        return t
     
     def _yin(self,yy):
         yin = ((2 * yy) + (self.b / 6) * (np.log(((yy + self.b) ** 2) / ((yy ** 2) + (self.b ** 2) - yy * self.b)))
