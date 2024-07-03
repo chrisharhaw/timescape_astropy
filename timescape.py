@@ -49,14 +49,13 @@ class timescape:
         self.fv0 = fv0 
 
         if H0_type.lower() == 'bare':
-            self.H0_bare = H0 
-            self.H0_dressed = (4*self.fv0**2 + self.fv0 + 4) * self.H0_bare / (2 * (2 + self.fv0))
+            self.H0_bare = H0 * u.km / (u.s * u.Mpc)
+            self.H0_dressed = (4*self.fv0**2 + self.fv0 + 4) * self.H0_bare / (2 * (2 + self.fv0)) #* u.km / (u.s * u.Mpc)
         elif H0_type.lower() == 'dressed':
-            self.H0_dressed = H0
-            self.H0_bare = (2 * (2 + self.fv0) * self.H0_dressed) / (4*self.fv0**2 + self.fv0 + 4)
+            self.H0_dressed = H0 * u.km / (u.s * u.Mpc)
+            self.H0_bare = (2 * (2 + self.fv0) * self.H0_dressed) / (4*self.fv0**2 + self.fv0 + 4) #* u.km / (u.s * u.Mpc)
         else:
             raise ValueError("H0_type must be either 'bare' or 'dressed'")
-        
 
         #Present Bare Density Parameters
         self.Om0_bare = self.Om_bare(0)
@@ -69,13 +68,15 @@ class timescape:
         self.OQ0_dressed = self.OQ0_bare * self._lapse_function(0)**3
         
 
-        self.b = (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.H0_bare)  # b parameter
-        self.t0 = (2.0 + self.fv0) / (3.0 * self.H0_bare * _H0units_to_invs / _sec_to_Gyr ) 
+        self.b = (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.H0_bare.value)  # b parameter
+        self.t0 = (2.0 + self.fv0) / (3.0 * self.H0_bare.value * _H0units_to_invs / _sec_to_Gyr ) * u.Gyr
         
 
     #Energy densities for dressed and bare parameters
     def Om_bare(self, z):
-        return 4* (1 - self.fv(self._tex(z))) / (2 + self.fv(self._tex(z)))**2 # Eq. B3 Average observational quantities in the timescape cosmology
+        t = self._tex(z)
+        print(t)
+        return 4* (1 - self.fv(t)) / (2 + self.fv(t))**2 # Eq. B3 Average observational quantities in the timescape cosmology
 
     def Ok_bare(self, z):
         return 9 * self.fv(self._tex(z)) / (2 + self.fv(self._tex(z)))**2 # Eq. B4 Average observational quantities in the timescape cosmology
@@ -108,7 +109,7 @@ class timescape:
           The cosmological redshift function for the time. 
       '''
       fv = self.fv(t)
-      return (2+fv)*fv**(1/3) / ( 3*t* self.H0_bare*self.fv0**(1/3) ) # Eq. 38 Average observational quantities in the timescape cosmology
+      return (2+fv)*fv**(1/3) / ( 3*t* self.H0_bare.value*self.fv0**(1/3) ) # Eq. 38 Average observational quantities in the timescape cosmology
 
     # Define the _texer function
     def _tex(self, z):
@@ -142,10 +143,10 @@ class timescape:
         '''
         t = self._tex(z) / _H0units_to_invs * _sec_to_Gyr
         term1 = 2.0 *t /3.0
-        term2 = 4.0 * self.Om0_dressed/(27.0 * self.fv0 * self.H0_bare * _H0units_to_invs / _sec_to_Gyr)
-        term3 = log(1.0 + (9.0*self.fv0 * self.H0_bare * _H0units_to_invs * t / _sec_to_Gyr) / (4.0 * self.Om0_dressed))
+        term2 = 4.0 * self.Om0_dressed/(27.0 * self.fv0 * self.H0_bare.value * _H0units_to_invs / _sec_to_Gyr)
+        term3 = log(1.0 + (9.0*self.fv0 * self.H0_bare.value * _H0units_to_invs * t / _sec_to_Gyr) / (4.0 * self.Om0_dressed))
         tau = term1 + term2 * term3
-        return tau
+        return tau * u.Gyr
     
     def volume_average_time(self, z):
         '''
@@ -179,7 +180,7 @@ class timescape:
             Tracker soln as function of time.
         '''
         
-        x = 3 * self.fv0 * t * self.H0_bare
+        x = 3 * self.fv0 * t * self.H0_bare.value
         return x /(x + (1.-self.fv0)*(2.+self.fv0)) # Eq. B2 Average observational quantities in the timescape cosmology
 
     def H_bare(self, z):
@@ -258,8 +259,8 @@ class timescape:
             Bare Scale Factor (setting a_dressed(0) = 1).
         '''
         t = self._tex(z)
-        prefactor = self._lapse_function(0) * (3*self.H0_bare*t)**(2/3) / (2 + self.fv0)
-        term1 = (3*self.fv0*self.H0_bare*t  +  (1-self.fv0)*(2+self.fv0))**(1/3)
+        prefactor = self._lapse_function(0) * (3*self.H0_bare.value*t)**(2/3) / (2 + self.fv0)
+        term1 = (3*self.fv0*self.H0_bare.value*t  +  (1-self.fv0)*(2+self.fv0))**(1/3)
         a_bare = prefactor * term1
         return a_bare
     
@@ -370,7 +371,8 @@ if __name__ == '__main__':
     
 
     print("test distance = ", ts.angular_diameter_distance(0.5))
-    print("volumage average age of the universe = ", ts.t0)
+    print("volume age average age of the universe = ", ts.t0)
+    print("Wall age average age of the universe = ", ts.wall_time(0))
   
 
  
