@@ -49,7 +49,7 @@ class timescape:
         self.fv0 = fv0 
 
         if H0_type.lower() == 'bare':
-            self.H0_bare = H0
+            self.H0_bare = H0 
             self.H0_dressed = (4*self.fv0**2 + self.fv0 + 4) * self.H0_bare / (2 * (2 + self.fv0))
         elif H0_type.lower() == 'dressed':
             self.H0_dressed = H0
@@ -70,18 +70,18 @@ class timescape:
         
 
         self.b = (2. * (1. - self.fv0)*(2. + self.fv0)) / (9. * self.fv0 * self.H0_bare)  # b parameter
-        self.t0 = (2.0 /3) + (self.fv0 / 3.0)
+        self.t0 = (2.0 + self.fv0) / (3.0 * self.H0_bare * _H0units_to_invs / _sec_to_Gyr ) 
         
 
     #Energy densities for dressed and bare parameters
     def Om_bare(self, z):
-        return 4* (1 - self.fv(self.tex(z))) / (2 + self.fv(self.tex(z)))**2 # Eq. B3 Average observational quantities in the timescape cosmology
+        return 4* (1 - self.fv(self._tex(z))) / (2 + self.fv(self._tex(z)))**2 # Eq. B3 Average observational quantities in the timescape cosmology
 
     def Ok_bare(self, z):
-        return 9 * self.fv(self.tex(z)) / (2 + self.fv(self.tex(z)))**2 # Eq. B4 Average observational quantities in the timescape cosmology
+        return 9 * self.fv(self._tex(z)) / (2 + self.fv(self._tex(z)))**2 # Eq. B4 Average observational quantities in the timescape cosmology
     
     def OQ_bare(self, z):
-        return -self.fv(self.tex(z)) * (1 - self.fv(self.tex(z)))  / (2 + self.fv(self.tex(z)))**2 # Eq. B5 Average observational quantities in the timescape cosmology
+        return -self.fv(self._tex(z)) * (1 - self.fv(self._tex(z)))  / (2 + self.fv(self._tex(z)))**2 # Eq. B5 Average observational quantities in the timescape cosmology
     
     def Om_dressed(self, z):
         return self.Om_bare(z) * self._lapse_function(z)**3
@@ -93,7 +93,7 @@ class timescape:
         return self.OQ_bare(z) * self._lapse_function(z)**3
 
     def _lapse_function(self, z):
-        return 0.5*(2 + self.fv(self.tex(z))) # Eq. B7 Average observational quantities in the timescape cosmology
+        return 0.5*(2 + self.fv(self._tex(z))) # Eq. B7 Average observational quantities in the timescape cosmology
 
       
     def z1(self, t):
@@ -110,8 +110,8 @@ class timescape:
       fv = self.fv(t)
       return (2+fv)*fv**(1/3) / ( 3*t* self.H0_bare*self.fv0**(1/3) ) # Eq. 38 Average observational quantities in the timescape cosmology
 
-    # Define the texer function
-    def tex(self, z):
+    # Define the _texer function
+    def _tex(self, z):
         '''
         Parameters
         ----------
@@ -128,6 +128,24 @@ class timescape:
         #   Use root_scalar to find the root
         result = root_scalar(func, bracket=[0.0001, 1])  # Adjust the bracket if needed
         return result.root
+    
+    def wall_time(self, z):
+        '''
+        Parameters
+        ----------
+        z : redshift
+
+        Returns
+        -------
+        Float
+            Time in Gyr.
+        '''
+        t = self._tex(z) / _H0units_to_invs * _sec_to_Gyr
+        term1 = 2.0 *t /3.0
+        term2 = 4.0 * self.Om0_dressed/(27.0 * self.fv0 * self.H0_bare * _H0units_to_invs / _sec_to_Gyr)
+        term3 = log(1.0 + (9.0*self.fv0 * self.H0_bare * _H0units_to_invs * t / _sec_to_Gyr) / (4.0 * self.Om0_dressed))
+        tau = term1 + term2 * term3
+        return tau
     
     def _yin(self,yy):
         yin = ((2 * yy) + (self.b / 6) * (np.log(((yy + self.b) ** 2) / ((yy ** 2) + (self.b ** 2) - yy * self.b)))
@@ -162,7 +180,7 @@ class timescape:
             Bare Hubble Parameter.
         '''
         
-        t = self.tex(z) # Time
+        t = self._tex(z) # Time
         return ( 2 + self.fv(t) ) / ( 3*t ) # Eq. B6 Average observational quantities in the timescape cosmology
     
 
@@ -179,7 +197,7 @@ class timescape:
             Dressed Hubble Parameter.
         '''
        
-        t = self.tex(z) # Time
+        t = self._tex(z) # Time
         return ( 4*self.fv_t(t)**2 + self.fv_t(t) +4 ) / ( 6*t ) # Eq. B8 Average observational quantities in the timescape cosmology
     
 
@@ -196,7 +214,7 @@ class timescape:
             Bare Deceleration Parameter.
         '''
 
-        return 2 * (1 - self.fv(self.tex(z)))**2 / (2 + self.fv(self.tex(z)))**2 # Eq. 58 ArXiv: 1311.3787
+        return 2 * (1 - self.fv(self._tex(z)))**2 / (2 + self.fv(self._tex(z)))**2 # Eq. 58 ArXiv: 1311.3787
     
     def q_dressed(self, z):
         '''
@@ -210,7 +228,7 @@ class timescape:
         Float
             Dressed Deceleration Parameter.
         ''' 
-        t = self.tex(z)
+        t = self._tex(z)
         numerator = - (1 - self.fv(t)) * (8*self.fv(t)**3 + 39*self.fv(t)**2 - 12*self.fv(t) - 8)
         denominator = (4 + 4*self.fv(t)**2 + self.fv(t))**2
         return numerator/denominator
@@ -225,7 +243,7 @@ class timescape:
         -------
             Bare Scale Factor (setting a_dressed(0) = 1).
         '''
-        t = self.tex(z)
+        t = self._tex(z)
         prefactor = self._lapse_function(0) * (3*self.H0_bare*t)**(2/3) / (2 + self.fv0)
         term1 = (3*self.fv0*self.H0_bare*t  +  (1-self.fv0)*(2+self.fv0))**(1/3)
         a_bare = prefactor * term1
@@ -257,7 +275,7 @@ class timescape:
             F function 
             Eqn.41 Average observational quantities in the timescape cosmology
         '''
-        t = self.tex(z)
+        t = self._tex(z)
         term1 = 2.*t**(1/3.)
         term2 = (self.b**(1/3.) /6.)*np.log( (t**(1/3.) + self.b**(1/3.))**2 / (-self.b**(1/3.)*t**(1/3.) + self.b**(2/3.) + t**(2/3.)) )
         term3 = (self.b**(1/3.)/np.sqrt(3)) * np.arctan( (2*t**(1/3.) - self.b**(1/3.)) / (np.sqrt(3) * self.b**(1/3.)) )
@@ -275,7 +293,7 @@ class timescape:
         Float
             Angular Diameter Distance.
         '''
-        t = self.tex(z)
+        t = self._tex(z)
         distance = const.c.to('km/s').value * t**(2/3.) * (self._F(z_2) - self._F(z)) 
         
         return distance * u.Mpc
@@ -338,8 +356,7 @@ if __name__ == '__main__':
     
 
     print("test distance = ", ts.angular_diameter_distance(0.5))
+    print("volumage average age of the universe = ", ts.t0)
+  
 
  
-   
-####Check which H parameter is found from CMB data and whether it is dressed or bare Hubble parameter
-####Might need to redo code to take bare parameter as input and then calculate dressed parameter
