@@ -196,7 +196,7 @@ class timescape:
         '''
         
         t = self._tex(z) # Time
-        return ( 2 + self.fv(t) ) / ( 3*t ) # Eq. B6 Average observational quantities in the timescape cosmology
+        return ( 2 + self.fv(t) ) / ( 3*t ) *  u.km / (u.s * u.Mpc) # Eq. B6 Average observational quantities in the timescape cosmology
     
 
     def H_dressed(self, z):
@@ -213,7 +213,7 @@ class timescape:
         '''
        
         t = self._tex(z) # Time
-        return ( 4*self.fv_t(t)**2 + self.fv_t(t) +4 ) / ( 6*t ) # Eq. B8 Average observational quantities in the timescape cosmology
+        return ( 4*self.fv_t(t)**2 + self.fv_t(t) +4 ) / ( 6*t ) *  u.km / (u.s * u.Mpc) # Eq. B8 Average observational quantities in the timescape cosmology
     
 
     def q_bare(self, z):
