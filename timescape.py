@@ -11,8 +11,8 @@ from math import exp, floor, log, pi, sqrt
 from scipy import integrate,optimize
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve, root_scalar
-import pandas as pd
 from astropy import units as u
+from astropy.units import Quantity
 import astropy.constants as const
 
 ############################################################################################################
@@ -157,7 +157,7 @@ class timescape:
 
         Returns
         -------
-        astropy quantity or pd.Dataframe
+        astropy quantity
             Gives the age of the universe at a given redshift for a wall observer.
         '''
 
@@ -180,7 +180,7 @@ class timescape:
         if len(taus) == 1:
             return taus[0]
         elif len(taus) > 1:
-            return self._pd_mode(taus)
+            return Quantity(taus, unit=u.Gyr)
         else:
             raise ValueError("How??")
     
@@ -193,7 +193,7 @@ class timescape:
 
         Returns
         -------
-        astropy quantity or pd.Dataframe
+        astropy quantity
             Gives the lookback time at a given redshift. Same as wall_time.
 
         '''
@@ -209,7 +209,7 @@ class timescape:
 
         Returns
         -------
-        astropy quantity or pd.Dataframe
+        astropy quantity
             Gives the lookback distance at a given redshift. Same as luminosity distance.
 
         '''
@@ -225,7 +225,7 @@ class timescape:
 
         Returns
         -------
-        astropy quantity or pd.Dataframe
+        astropy quantity
             Gives the volume average age of the universe at a given redshift.
         '''
 
@@ -233,8 +233,7 @@ class timescape:
             zs = np.array(zs)
             t = [self._tex(z) / _H0units_to_invs * _sec_to_Gyr * u.Gyr for z in zs]
             values = [quantity.value for quantity in t]
-            units = [quantity.unit for quantity in t]
-            return pd.DataFrame({'Total': t, 'Value': values, 'Unit': units})
+            return Quantity(values, unit=u.Gyr)
         elif isinstance(zs, (int, float)):
             return self._tex(zs) / _H0units_to_invs * _sec_to_Gyr * u.Gyr
         else:
@@ -287,8 +286,8 @@ class timescape:
             hs = []
             for z in zs:
                 t = self._tex(z) # Time
-                hs.append( (2 + self.fv(z) ) / ( 3*t ) *  u.km / (u.s * u.Mpc) ) # Eq. B6 Average observational quantities in the timescape cosmology
-            return self._pd_mode(hs)
+                hs.append( (2 + self.fv(z) ) / ( 3*t ) ) # Eq. B6 Average observational quantities in the timescape cosmology
+            return Quantity(hs, unit=u.km / (u.s * u.Mpc) )
 
         elif isinstance(zs, (int, float)):
             t = self._tex(zs)
@@ -315,7 +314,7 @@ class timescape:
             for z in zs:
                 t = self._tex(z) # Time
                 hs.append( ( 4*self.fv(z)**2 + self.fv(z) +4 ) / ( 6*t ) *  u.km / (u.s * u.Mpc)) # Eq. B8 Average observational quantities in the timescape cosmology
-            return self._pd_mode(hs)
+            return Quantity(hs, unit=u.km / (u.s * u.Mpc) )
 
         elif isinstance(zs, (int, float)):
             t = self._tex(zs)
@@ -452,7 +451,7 @@ class timescape:
 
         Returns
         -------
-        distances: Float or pd.DataFrame
+        distances: Float
             Angular Diameter Distance.
         '''
 
@@ -487,7 +486,7 @@ class timescape:
         if len(distances) == 1:
             return distances[0]
         elif len(distances) > 1:
-            return self._pd_mode(distances)
+            return Quantity(distances, unit=u.Mpc)
         else:
             raise ValueError("How??")
     
@@ -502,7 +501,7 @@ class timescape:
 
         Returns
         -------
-        distances: Float or pd.DataFrame
+        distances: Float
             Angular Diameter Distance between z_1 and z_2.
         '''
 
@@ -517,7 +516,7 @@ class timescape:
 
         Returns
         -------
-        distances: Float or pd.DataFrame
+        distances: Float
             Transverse Comoving Distance.
         '''
 
@@ -532,7 +531,7 @@ class timescape:
             return self.angular_diameter_distance(zs[0]) * (1+zs[0])
         elif len(zs) > 1:
             distances = [self.angular_diameter_distance(z) * (1+z) for z in zs]
-            return self._pd_mode(distances)
+            return Quantity(distances, unit=u.km / (u.s * u.Mpc) )
         else:
             raise ValueError("Empty input array")
     
@@ -545,7 +544,7 @@ class timescape:
 
         Returns
         -------
-        distances: Float or pd.DataFrame
+        distances: Float
             Luminosity Distance.
         '''
         
@@ -560,26 +559,9 @@ class timescape:
             return self.angular_diameter_distance(zs[0]) * (1+zs[0])**2
         elif len(zs) > 1:
             distances = [self.angular_diameter_distance(z) * (1+z)**2 for z in zs]
-            return self._pd_mode(distances)
+            return Quantity(distances, unit=u.Mpc)
         else:
             raise ValueError("Empty input array")
-        
-    def _pd_mode(self, input_list):
-        '''
-        Parameters
-        ----------
-        input_list : List
-            List of values.
-
-        Returns
-        -------
-        pd.DataFrame
-            dataframe of values.
-        '''
-        values = [quantity.value for quantity in input_list]
-        units = [quantity.unit for quantity in input_list]
-        return pd.DataFrame({'Total': input_list, 'Value': values, 'Unit': units})
-
 
 if __name__ == '__main__':
     H0 = 61.7 # dressed H0 value
