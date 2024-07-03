@@ -182,6 +182,7 @@ class timescape:
         t = self.tex(z) # Time
         return ( 4*self.fv_t(t)**2 + self.fv_t(t) +4 ) / ( 6*t ) # Eq. B8 Average observational quantities in the timescape cosmology
     
+
     def q_bare(self, z):
         '''
         Parameters
@@ -208,14 +209,40 @@ class timescape:
         -------
         Float
             Dressed Deceleration Parameter.
-        '''
-
+        ''' 
         t = self.tex(z)
-
         numerator = - (1 - self.fv(t)) * (8*self.fv(t)**3 + 39*self.fv(t)**2 - 12*self.fv(t) - 8)
         denominator = (4 + 4*self.fv(t)**2 + self.fv(t))**2
-
         return numerator/denominator
+
+    def scale_factor_bare(self,z):
+        '''
+        Parameters
+        ----------
+        z : redshift  
+        
+        Returns
+        -------
+            Bare Scale Factor (setting a_dressed(0) = 1).
+        '''
+        t = self.tex(z)
+        prefactor = self._lapse_function(0) * (3*self.H0_bare*t)**(2/3) / (2 + self.fv0)
+        term1 = (3*self.fv0*self.H0_bare*t  +  (1-self.fv0)*(2+self.fv0))**(1/3)
+        a_bare = prefactor * term1
+        return a_bare
+    
+    def scale_factor_dressed(self,z):
+        '''
+        Parameters
+        ----------
+        z : redshift
+        
+        Returns
+        -------
+            Dressed Scale Factor (setting a_dressed(0) = 1).
+        '''
+        a_dressed = (self.scale_factor_bare(z) * self._lapse_function(0)) / (self.scale_factor_bare(0) * self._lapse_function(z))
+        return a_dressed
 
     def _F(self, z):
 
