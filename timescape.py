@@ -128,6 +128,11 @@ class timescape:
             self.age = self.wall_time(0)
             self.T0 = self.T0_dressed
 
+
+    def hubble_distance(self):
+        """Hubble distance as `~astropy.units.Quantity`."""
+        return (const.c / self.H0_dressed).to(u.Mpc)
+
     #Energy densities for dressed and bare parameters
     def Om_bare(self, z):
         '''
@@ -691,7 +696,7 @@ if __name__ == '__main__':
     # H0 = 61.7 # dressed H0 value
     # fv0 = 0.695 # Void Fraction at present time
     # ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
-    ts = timescape()
+    ts = timescape() # Initialise TS class
     
     print("test distance = ", ts.angular_diameter_distance([3], [1]))
     print("test distance = ", ts.angular_diameter_distance([1], [3]))
