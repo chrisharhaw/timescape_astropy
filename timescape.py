@@ -71,16 +71,20 @@ class timescape:
         ----------
         fv0 : Float
             Void Fraction at present time.
+            Default value is 'fv0 = 0.716' as determined from Pantheon+ Supernova analysis [2]
         
         H0 : Float
             Dressed Hubble Parameter at present time.
+            Default value is 'H0 = 61.7' as determined from Planck CMB data [3]
 
         References
         ----------
-        [1] Wiltshire, D. L. (20016) "Cosmic Structure, Averaging and Dark Energy" ArXiv: 1311.3787 
+        [1] Wiltshire, D. L. (2016) "Cosmic Structure, Averaging and Dark Energy" ArXiv: 1311.3787 
+        [2] Lane, Z. G. et al. (2023) "Cosmological Foundations revisited with Pantheon+" ArXiv: 2311.01438
+        [3] Duley, J. A. G. et al. (2013) "Timescape cosmology with radiation fluid" ArXiV: 1306.3208
         '''
         #Void Fraction at Present Time
-        self.fv0 = fv0 
+        self.fv0 = fv0  
 
         if H0_type.lower() == 'bare':
             self.H0_bare = H0 * u.km / (u.s * u.Mpc)
@@ -241,12 +245,6 @@ class timescape:
         Float
             Time 
         '''
-        # # Define the function to find the root
-        # def func(t):
-        #     return self.z1(t) - z - 1
-        # #   Use root_scalar to find the root
-        # result = root_scalar(func, bracket=[0.0001, 1])  # Adjust the bracket if needed
-        # return result.root
 
         # Define the function to find the root
         def func(t, z):
@@ -264,10 +262,9 @@ class timescape:
 
         return vfind_root(z)
 
-
-
     def wall_time(self, zs):
-        '''
+        '''Age of the universe for a wall observer at a given redshift.
+
         Parameters
         ----------
         zs : Array of floats
@@ -331,7 +328,8 @@ class timescape:
         return (self.lookback_time * const.c).to(u.Mpc)
     
     def volume_average_time(self, zs):
-        '''
+        '''Age of the universe an ideal volume-average isotropic observer would observer
+        at a given redshift. 
         Parameters
         ----------
         zs : Array of floats
