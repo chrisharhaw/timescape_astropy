@@ -59,7 +59,8 @@ def aszarr(z):
 class timescape:
     def __init__(self, fv0 = 0.695, H0 = 61.7, H0_type = 'dressed', T0 = 2.725 * u.K):
         '''The tracker solution of the timescape cosmology. A solution of the averaged Einstein 
-        equations with backreaction. 
+        equations with backreaction that explains the accelerated expansion of the universe without the
+        need for dark energy.
 
         This solution has both dressed and bare parameters. The dressed parameters are parameters a
         wall observer would infer when trying to fit an FLRW model to the universe. The bare parameters
@@ -288,7 +289,7 @@ class timescape:
   
     
     def lookback_time(self, zs):
-        '''Lookback time in Gyr to redshift ``z``.
+        '''Lookback time in Gyr to redshift ``z`` for a wall observer.
 
         The lookback time is the difference between the age of the Universe now
         and the age at redshift ``z`` as measured by a wall observer.
@@ -305,10 +306,16 @@ class timescape:
 
         '''
 
-        return self.wall_time(zs)
+        return self.wall_time(0) - self.wall_time(zs)
     
     def lookback_distance(self, zs):
-        '''
+        '''The lookback distance is the light travel time distance to a given redshift
+        for a wall observer.
+
+        It is simply c * lookback_time. It may be used to calculate
+        the proper distance between two redshifts, e.g. for the mean free path
+        to ionizing radiation.
+
         Parameters
         ----------
         zs : Array of floats
@@ -321,7 +328,7 @@ class timescape:
 
         '''
 
-        return self.luminosity_distance(zs)
+        return (self.lookback_time * const.c).to(u.Mpc)
     
     def volume_average_time(self, zs):
         '''
@@ -652,6 +659,8 @@ class timescape:
 
         dist = self.angular_diameter_distance(zs, z_2) * (1+zs)**2
         return Quantity(dist, unit=u.Mpc)
+    
+
 
 if __name__ == '__main__':
     # H0 = 61.7 # dressed H0 value
