@@ -5,7 +5,6 @@ Created on Wed Feb 21 14:29:50 2024
 @author: zgl12 + cha227 
 """
 
-
 import numpy as np
 from numbers import Number
 from math import exp, floor, log, pi, sqrt
