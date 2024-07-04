@@ -7,10 +7,15 @@ Created on Wed Feb 21 14:29:50 2024
 
 
 import numpy as np
+from numbers import Number
 from math import exp, floor, log, pi, sqrt
 from scipy import integrate,optimize
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve, root_scalar
+
+#from astropy.cosmology._utils import aszarr
+# from . import units as cu
+from astropy.cosmology import units as cu
 from astropy import units as u
 from astropy.units import Quantity
 import astropy.constants as const
@@ -32,6 +37,25 @@ _kB_evK = const.k_B.to(u.eV / u.K)
 
 
 ############################################################################################################
+
+def aszarr(z):
+    """Redshift as a `~numbers.Number` or |ndarray| / |Quantity| / |Column|.
+
+    Allows for any ndarray ducktype by checking for attribute "shape".
+    """
+    if isinstance(z, (Number, np.generic)):  # scalars
+        return z
+    elif hasattr(z, "shape"):  # ducktypes NumPy array
+        if getattr(z, "__module__", "").startswith("pandas"):
+            # See https://github.com/astropy/astropy/issues/15576. Pandas does not play
+            # well with others and will ignore unit-ful calculations so we need to
+            # convert to it's underlying value.
+            z = z.values
+        if hasattr(z, "unit"):  # Quantity Column
+            return (z << cu.redshift).value  # for speed only use enabled equivs
+        return z
+    # not one of the preferred types: Number / array ducktype
+    return Quantity(z, cu.redshift).value
 
 class timescape:
     def __init__(self, fv0 = 0.695, H0 = 61.7, H0_type = 'dressed', T0 = 2.725 * u.K):
@@ -141,13 +165,31 @@ class timescape:
         Float
             Time 
         '''
+        # # Define the function to find the root
+        # def func(t):
+        #     return self.z1(t) - z - 1
+        # #   Use root_scalar to find the root
+        # result = root_scalar(func, bracket=[0.0001, 1])  # Adjust the bracket if needed
+        # return result.root
+
         # Define the function to find the root
-        def func(t):
+        def func(t, z):
             return self.z1(t) - z - 1
-        #   Use root_scalar to find the root
-        result = root_scalar(func, bracket=[0.0001, 1])  # Adjust the bracket if needed
-        return result.root
-    
+
+        # Vectorize the function
+        vfunc = np.vectorize(func)
+
+        # Use root_scalar to find the root
+        def find_root(z):
+            return root_scalar(lambda t: vfunc(t, z), bracket=[0.0001, 1]).root  # Adjust the bracket if needed
+
+        # Vectorize the root finding function
+        vfind_root = np.vectorize(find_root)
+
+        return vfind_root(z)
+
+
+
     def wall_time(self, zs):
         '''
         Parameters
@@ -160,29 +202,15 @@ class timescape:
         astropy quantity
             Gives the age of the universe at a given redshift for a wall observer.
         '''
+        zs = aszarr(zs)
+        t = self._tex(zs) / _H0units_to_invs * _sec_to_Gyr
+        term1 = 2.0 *t /3.0
+        term2 = 4.0 * self.Om0_dressed/(27.0 * self.fv0 * self.H0_bare.value * _H0units_to_invs / _sec_to_Gyr)
+        term3 = np.log(1.0 + (9.0 * self.fv0 * self.H0_bare.value * _H0units_to_invs * t / _sec_to_Gyr) / (4.0 * self.Om0_dressed))
+        tau = term1 + term2 * term3
 
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-        elif isinstance(zs, (int, float)):
-            zs = np.array([zs])
-        else:
-            raise ValueError("Input redshift must be an array of floats or a float")
-        
-        taus = []
-        for z in zs:
-            t = self._tex(z) / _H0units_to_invs * _sec_to_Gyr
-            term1 = 2.0 *t /3.0
-            term2 = 4.0 * self.Om0_dressed/(27.0 * self.fv0 * self.H0_bare.value * _H0units_to_invs / _sec_to_Gyr)
-            term3 = log(1.0 + (9.0*self.fv0 * self.H0_bare.value * _H0units_to_invs * t / _sec_to_Gyr) / (4.0 * self.Om0_dressed))
-            tau = term1 + term2 * term3
-            taus.append(tau * u.Gyr)
-        
-        if len(taus) == 1:
-            return taus[0]
-        elif len(taus) > 1:
-            return Quantity(taus, unit=u.Gyr)
-        else:
-            raise ValueError("How??")
+        return Quantity(tau, unit=u.Gyr)
+  
     
     def lookback_time(self, zs):
         '''
@@ -228,16 +256,10 @@ class timescape:
         astropy quantity
             Gives the volume average age of the universe at a given redshift.
         '''
+        zs = aszarr(zs)
 
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-            t = [self._tex(z) / _H0units_to_invs * _sec_to_Gyr * u.Gyr for z in zs]
-            values = [quantity.value for quantity in t]
-            return Quantity(values, unit=u.Gyr)
-        elif isinstance(zs, (int, float)):
-            return self._tex(zs) / _H0units_to_invs * _sec_to_Gyr * u.Gyr
-        else:
-            raise ValueError("Input redshift must be an array of floats or a float")
+        t = self._tex(zs) / _H0units_to_invs * _sec_to_Gyr
+        return Quantity(t, unit=u.Gyr)
 
     def _yin(self,yy):
         yin = ((2 * yy) + (self.b / 6) * (np.log(((yy + self.b) ** 2) / ((yy ** 2) + (self.b ** 2) - yy * self.b)))
@@ -280,20 +302,10 @@ class timescape:
         Float
             Bare Hubble Parameter.
         '''
-
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-            hs = []
-            for z in zs:
-                t = self._tex(z) # Time
-                hs.append( (2 + self.fv(z) ) / ( 3*t ) ) # Eq. B6 Average observational quantities in the timescape cosmology
-            return Quantity(hs, unit=u.km / (u.s * u.Mpc) )
-
-        elif isinstance(zs, (int, float)):
-            t = self._tex(zs)
-            return ( 2 + self.fv(z) ) / ( 3*t ) *  u.km / (u.s * u.Mpc)  # Eq. B6 Average observational quantities in the timescape cosmology
-        else:
-            raise ValueError("Input redshift must be an array of floats or a float")
+        zs = aszarr(zs)
+        t = self._tex(zs) # Time
+        hb = ( (2 + self.fv(zs) ) / ( 3*t ) ) # Eq. B6 Average observational quantities in the timescape cosmology
+        return Quantity(hb, unit=u.km / (u.s * u.Mpc) )
 
     def H_dressed(self, zs):
         '''
@@ -308,19 +320,10 @@ class timescape:
             Dressed Hubble Parameter.
         '''
        
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-            hs = []
-            for z in zs:
-                t = self._tex(z) # Time
-                hs.append( ( 4*self.fv(z)**2 + self.fv(z) +4 ) / ( 6*t ) *  u.km / (u.s * u.Mpc)) # Eq. B8 Average observational quantities in the timescape cosmology
-            return Quantity(hs, unit=u.km / (u.s * u.Mpc) )
-
-        elif isinstance(zs, (int, float)):
-            t = self._tex(zs)
-            return( 4*self.fv(zs)**2 + self.fv(zs) +4 ) / ( 6*t ) *  u.km / (u.s * u.Mpc) # Eq. B8 Average observational quantities in the timescape cosmology
-        else:
-            raise ValueError("Input redshift must be an array of floats or a float")
+        zs = aszarr(zs)
+        t = self._tex(zs)
+        hd = ( 4*self.fv(zs)**2 + self.fv(zs) +4 ) / ( 6*t ) # Eq. B8 Average observational quantities in the timescape cosmology
+        return Quantity(hd, unit=u.km / (u.s * u.Mpc) )
 
     def q_bare(self, zs):
         '''
@@ -335,13 +338,9 @@ class timescape:
             Bare Deceleration Parameter.
         '''
 
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-            return np.array([2 * (1 - self.fv(z))**2 / (2 + self.fv(z))**2 for z in zs]) # Eq. 58 ArXiv: 1311.3787
-        elif isinstance(zs, (int, float)):
-            return 2 * (1 - self.fv(zs))**2 / (2 + self.fv(zs))**2 # Eq. 58 ArXiv: 1311.3787
-        else:
-            raise ValueError("Input redshift must be an array of floats or a float")
+        zs = aszarr(zs)
+        qb = 2 * (1 - self.fv(zs))**2 / (2 + self.fv(zs))**2 # Eq. 58 ArXiv: 1311.3787
+        return qb
     
     def q_dressed(self, zs):
         '''
@@ -355,18 +354,11 @@ class timescape:
         Array of floats
             Dressed Deceleration Parameter.
         ''' 
-
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-            numerator = np.array([- (1 - self.fv(z)) * (8*self.fv(z)**3 + 39*self.fv(z)**2 - 12*self.fv(z) - 8) for z in zs]) # Eq. 58 ArXiv: 1311.3787
-            denominator = np.array([(4 + 4*self.fv(z)**2 + self.fv(z))**2 for z in zs])
-            return numerator/denominator
-        elif isinstance(zs, (int, float)):
-            numerator = - (1 - self.fv(zs)) * (8*self.fv(zs)**3 + 39*self.fv(zs)**2 - 12*self.fv(zs) - 8)
-            denominator = (4 + 4*self.fv(zs)**2 + self.fv(zs))**2
-            return numerator/denominator
-        else:
-            raise ValueError("Input redshift must be an array of floats or a float")
+        
+        zs = aszarr(zs)
+        numerator = - (1 - self.fv(zs)) * (8*self.fv(zs)**3 + 39*self.fv(zs)**2 - 12*self.fv(zs) - 8)
+        denominator = (4 + 4*self.fv(zs)**2 + self.fv(zs))**2
+        return numerator/denominator
 
     def scale_factor_bare(self,z):
         '''
@@ -439,8 +431,36 @@ class timescape:
             return distance
         else:
             raise ValueError("Second redshift must be a float")
+        
+    def _ordering(self, z_1_temp, z_2_temp):
 
-    def angular_diameter_distance(self, zs, z_2=0): 
+        if isinstance(z_1_temp, (np.ndarray, list)) & isinstance(z_2_temp, (np.ndarray, list)):
+            if (len(z_1_temp) == len(z_2_temp)) | (len(z_1_temp) == 1) | (len(z_2_temp) == 1):
+                z_1, z_2 = self._order_output(z_1_temp, z_2_temp)
+                return z_1, z_2
+            else:
+                raise ValueError("Input lengths are expected to coincide or one of them is expected to be of length 1.")
+        elif isinstance(z_1_temp, (int, float)) | isinstance(z_2_temp, (int, float)):
+            z_1, z_2 = self._order_output([z_1_temp], [z_2_temp])
+            return z_1, z_2
+        else:
+            raise ValueError("Input lengths are expected to coincide or one of them is expected to be of length 1.")
+
+    def _order_output(self, z_1_temp, z_2_temp, verbose = True):
+            z_1 = np.minimum(z_1_temp, z_2_temp)  # Take the lower values
+            z_2 = np.maximum(z_1_temp, z_2_temp)  # Take the higher values
+            if not np.array_equal(z_1, z_1_temp) & verbose:
+                print("Reordering inputs to make z_1 < z_2.")
+
+            # Find indices where z_1 and z_2 are different
+            indices = np.where(z_1 != z_2)
+
+            # Filter z_1 and z_2 using the indices
+            z_1 = z_1[indices]
+            z_2 = z_2[indices]
+            return z_1, z_2
+
+    def angular_diameter_distance(self, z_2, z_1 =0): 
         '''
         Parameters
         ----------
@@ -455,50 +475,36 @@ class timescape:
             Angular Diameter Distance.
         '''
 
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-            if isinstance(z_2, (tuple, list, np.ndarray)):
-                if len(zs) == len(z_2):
-                    z_2 = np.array(z_2)
-                elif len(z_2) == 1:
-                    z_2 = np.array([z_2[0]]*len(zs))
-                else:
-                    raise ValueError("Input redshifts of array type must be the same length")
-                
-            elif isinstance(z_2, (int, float)):
-                z_2 = np.array([z_2]*len(zs))
-            else:
-                raise ValueError("Second redshift must be a float or an array of floats")
-            
-            distances = [self._array_dist(zs[i], z_2[i]) for i in range(len(zs))]
+        z_1 = aszarr(z_1)
+        z_2 = aszarr(z_2)
+        z_1, z_2 = self._ordering(z_1, z_2)
+        t = self._tex(z_2)
 
-        elif isinstance(zs, (int, float)):
-            if isinstance(z_2, (int, float)):
-                distances = [self._array_dist(zs, z_2)]
-            elif isinstance(z_2, (tuple, list, np.ndarray)):
-                if len(z_2) == 1:
-                    distances = [self._array_dist(zs, z_2[0])]
-            else:
-                raise ValueError("Input redshifts must be a single float")
+        if isinstance(z_2, (int, float)):
+            distance = (const.c.to('km/s').value * t**(2/3.) * (self._F(z_1) - self._F(z_2)) ) 
+            return Quantity(distance, unit=u.Mpc)
+        elif len(z_2) == len(z_1):
+            distance = (const.c.to('km/s').value * t**(2/3.) * (self._F(z_1) - self._F(z_2)) ) 
+            return Quantity(distance, unit=u.Mpc)
+        elif len(z_2) == 1:
+            distance = (const.c.to('km/s').value * t**(2/3.) * (self._F(z_1) - self._F(z_2[0])) ) 
+            return Quantity(distance, unit=u.Mpc)
+        elif len(z_1) == 1:
+            distance = (const.c.to('km/s').value * t**(2/3.) * (self._F(z_1[0]) - self._F(z_2)) ) 
+            return Quantity(distance, unit=u.Mpc)
         else:
-            raise ValueError("Input redshift must be an array of floats or a float")
-
-        if len(distances) == 1:
-            return distances[0]
-        elif len(distances) > 1:
-            return Quantity(distances, unit=u.Mpc)
-        else:
-            raise ValueError("How??")
+            raise ValueError("Input redshifts must be the same length")
     
     def angular_diameter_distance_z1z2(self, z_1, z_2):
         '''
         Parameters
         ----------
         z_1: Array of floats
-            Redshift of lens in CMB frame
+            Redshift in CMB frame
         z_2: Array of Floats
-            Redshift of source in CMB frame
+            Redshift in CMB frame
 
+        Where z_2 > z_1.
         Returns
         -------
         distances: Float
@@ -507,7 +513,7 @@ class timescape:
 
         return self.angular_diameter_distance(z_1, z_2)
     
-    def transverse_comoving_distance(self, zs):
+    def transverse_comoving_distance(self, zs, z_2 = 0):
         '''
         Parameters
         ----------
@@ -520,22 +526,12 @@ class timescape:
             Transverse Comoving Distance.
         '''
 
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-        elif isinstance(zs, (int, float)):
-            zs = np.array([zs])
-        else:
-            raise ValueError("Input redshift must be an array of floats or a float")
-        
-        if len(zs) == 1:
-            return self.angular_diameter_distance(zs[0]) * (1+zs[0])
-        elif len(zs) > 1:
-            distances = [self.angular_diameter_distance(z) * (1+z) for z in zs]
-            return Quantity(distances, unit=u.km / (u.s * u.Mpc) )
-        else:
-            raise ValueError("Empty input array")
+        zs = aszarr(zs)
+
+        dist = self.angular_diameter_distance(zs, z_2) * (1+zs)
+        return Quantity(dist, unit=u.Mpc )
     
-    def luminosity_distance(self, zs):
+    def luminosity_distance(self, zs, z_2  = 0):
         '''
         Parameters
         ----------
@@ -548,32 +544,21 @@ class timescape:
             Luminosity Distance.
         '''
         
-        if isinstance(zs, (tuple, list, np.ndarray)):
-            zs = np.array(zs)
-        elif isinstance(zs, (int, float)):
-            zs = np.array([zs])
-        else:
-            raise ValueError("Input redshift must be an array of floats or a float")
-        
-        if len(zs) == 1:
-            return self.angular_diameter_distance(zs[0]) * (1+zs[0])**2
-        elif len(zs) > 1:
-            distances = [self.angular_diameter_distance(z) * (1+z)**2 for z in zs]
-            return Quantity(distances, unit=u.Mpc)
-        else:
-            raise ValueError("Empty input array")
+        zs = aszarr(zs)
+
+        dist = self.angular_diameter_distance(zs, z_2) * (1+zs)**2
+        return Quantity(dist, unit=u.Mpc)
 
 if __name__ == '__main__':
     H0 = 61.7 # dressed H0 value
     fv0 = 0.695 # Void Fraction at present time
     ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
     
-    print("test distance = ", ts.angular_diameter_distance([1, 2], [0.5]))
-    print("volume age average age of the universe = ", ts.t0)
-    print("Wall age average age of the universe = ", ts.wall_time(0))
-    print("Age = ", ts.age)
-    print("Volume average time = ", ts.volume_average_time(0))
-    print("H dressed", ts.H_dressed(np.linspace(0, 1, 101)))
-    print('q dressed', ts.q_dressed(np.linspace(0, 1, 101)))
+    print("test distance = ", ts.angular_diameter_distance([3], [1]))
+    print("test distance = ", ts.angular_diameter_distance([1], [3]))
+    print("test distance = ", ts.angular_diameter_distance([1,2], [3]))
+    print("test distance = ", ts.angular_diameter_distance([1], [3,2]))
+    
+   
 
  
