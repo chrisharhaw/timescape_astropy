@@ -5,7 +5,6 @@ Created on Wed Feb 21 14:29:50 2024
 @author: zgl12 + cha227 
 """
 
-
 import numpy as np
 from numbers import Number
 from math import exp, floor, log, pi, sqrt
@@ -59,7 +58,15 @@ def aszarr(z):
 
 class timescape:
     def __init__(self, fv0 = 0.695, H0 = 61.7, H0_type = 'dressed', T0 = 2.725 * u.K):
-        '''
+        '''The tracker solution of the timescape cosmology. A solution of the averaged Einstein 
+        equations with backreaction that explains the accelerated expansion of the universe without the
+        need for dark energy.
+
+        This solution has both dressed and bare parameters. The dressed parameters are parameters a
+        wall observer would infer when trying to fit an FLRW model to the universe. The bare parameters
+        are the volume-average parameters of the Buchert formalism, and are the parameters an observer
+        would infer if their local spatial curvature coincides with the volume average spatial curvature.[1]
+
         Parameters
         ----------
         fv0 : Float
@@ -67,8 +74,11 @@ class timescape:
         
         H0 : Float
             Dressed Hubble Parameter at present time.
-        '''
 
+        References
+        ----------
+        [1] Wiltshire, D. L. (20016) "Cosmic Structure, Averaging and Dark Energy" ArXiv: 1311.3787 
+        '''
         #Void Fraction at Present Time
         self.fv0 = fv0 
 
@@ -116,22 +126,88 @@ class timescape:
 
     #Energy densities for dressed and bare parameters
     def Om_bare(self, z):
+        '''
+        Parameters
+        ----------
+        z : array of floats
+            Redshift in CMB frame.
+        
+        Returns
+        -------
+        Float   
+            Bare Matter Density Parameter (volume-averaged)
+        '''
         return 4* (1 - self.fv(z)) / (2 + self.fv(z))**2 # Eq. B3 Average observational quantities in the timescape cosmology
 
     def Ok_bare(self, z):
+        '''
+        Parameters
+        ----------
+        z : array of floats
+            Redshift in CMB frame.
+        
+        Returns
+        -------
+        Float   
+            Bare Spatial Curvature Energy Density Parameter (volume-averaged)
+        '''
         return 9 * self.fv(z) / (2 + self.fv(z))**2 # Eq. B4 Average observational quantities in the timescape cosmology
     
     def OQ_bare(self, z):
+        '''
+        Parameters
+        ----------
+        z : array of floats
+            Redshift in CMB frame.
+        
+        Returns
+        -------
+        Float   
+            Bare Backreaction Density Parameter (volume-averaged)
+        '''
         return -self.fv(z) * (1 - self.fv(z))  / (2 + self.fv(z))**2 # Eq. B5 Average observational quantities in the timescape cosmology
     
     def Om_dressed(self, z):
-        return self.Om_bare(z) * self._lapse_function(z)**3
+        '''
+        Parameters
+        ----------
+        z : array of floats
+            Redshift in CMB frame.
+        
+        Returns
+        -------
+        Float   
+            Matter Density Parameter (dressed)
+        '''
+        return self.Om_bare(z) * self._lapse_function(z)**3  # Eq. 49 Cosmic Structure, averaging and dark energy
     
     def Ok_dressed(self, z):
-        return self.Ok_bare(z) * self._lapse_function(z)**3
+        '''
+        Parameters
+        ----------
+        z : array of floats
+            Redshift in CMB frame.
+        
+        Returns
+        -------
+        Float   
+            Average Spatial Curvature Energy Density Parameter (dressed)
+        '''
+        return self.Ok_bare(z) * self._lapse_function(z)**3  # Eq. 49 Cosmic Structure, averaging and dark energy
 
     def OQ_dressed(self, z):
-        return self.OQ_bare(z) * self._lapse_function(z)**3
+        '''
+        Parameters
+        ----------
+        z : array of floats
+            Redshift in CMB frame.
+        
+        Returns
+        -------
+        Float   
+            Backreaction Energy Density Parameter (dressed)
+        '''
+        return self.OQ_bare(z) * self._lapse_function(z)**3  # Eq. 49 Cosmic Structure, averaging and dark energy
 
     def _lapse_function(self, z):
         return 0.5*(2 + self.fv(z)) # Eq. B7 Average observational quantities in the timescape cosmology
@@ -213,7 +289,11 @@ class timescape:
   
     
     def lookback_time(self, zs):
-        '''
+        '''Lookback time in Gyr to redshift ``z`` for a wall observer.
+
+        The lookback time is the difference between the age of the Universe now
+        and the age at redshift ``z`` as measured by a wall observer.
+
         Parameters
         ----------
         zs : Float
@@ -226,10 +306,16 @@ class timescape:
 
         '''
 
-        return self.wall_time(zs)
+        return self.wall_time(0) - self.wall_time(zs)
     
     def lookback_distance(self, zs):
-        '''
+        '''The lookback distance is the light travel time distance to a given redshift
+        for a wall observer.
+
+        It is simply c * lookback_time. It may be used to calculate
+        the proper distance between two redshifts, e.g. for the mean free path
+        to ionizing radiation.
+
         Parameters
         ----------
         zs : Array of floats
@@ -242,7 +328,7 @@ class timescape:
 
         '''
 
-        return self.luminosity_distance(zs)
+        return (self.lookback_time * const.c).to(u.Mpc)
     
     def volume_average_time(self, zs):
         '''
@@ -280,7 +366,6 @@ class timescape:
         Float
             Tracker soln as function of time.
         '''
-
         if tmode:
             t = z
             x = 3 * self.fv0 * t * self.H0_bare.value
@@ -319,7 +404,6 @@ class timescape:
         Float
             Dressed Hubble Parameter.
         '''
-       
         zs = aszarr(zs)
         t = self._tex(zs)
         hd = ( 4*self.fv(zs)**2 + self.fv(zs) +4 ) / ( 6*t ) # Eq. B8 Average observational quantities in the timescape cosmology
@@ -337,7 +421,6 @@ class timescape:
         Float
             Bare Deceleration Parameter.
         '''
-
         zs = aszarr(zs)
         qb = 2 * (1 - self.fv(zs))**2 / (2 + self.fv(zs))**2 # Eq. 58 ArXiv: 1311.3787
         return qb
@@ -361,7 +444,12 @@ class timescape:
         return numerator/denominator
 
     def scale_factor_bare(self,z):
-        '''
+        '''Bare scale factor at redshift ``z``.
+
+        The bare scale factor is defined with respect to the dressed scale factor
+        which is chosen at the present time to be 'a_0 = 1'. The bare scale factor
+        is related to the dressed scale factor by the lapse function.
+         
         Parameters
         ----------
         z : Array of floats
@@ -378,7 +466,11 @@ class timescape:
         return a_bare
     
     def scale_factor_dressed(self,z):
-        '''
+        '''Scale factor at redshift ``z``.
+
+        The dressed scale factor at the present time is chosen to be 'a_0 = 1'. 
+        The dressed scale factor is related to the bare scale factor by the lapse function.
+
         Parameters
         ----------
         z : Array of floats
@@ -461,7 +553,12 @@ class timescape:
             return z_1, z_2
 
     def angular_diameter_distance(self, z_2, z_1 =0): 
-        '''
+        '''Angular diameter distance in Mpc at a given redshift.
+
+        This gives the proper (sometimes called 'physical') transverse
+        distance corresponding to an angle of 1 radian for an object
+        at redshift ``z`` ([1]_, [2]_, [3]_).
+
         Parameters
         ----------
         zs : Array of floats
@@ -473,8 +570,13 @@ class timescape:
         -------
         distances: Float
             Angular Diameter Distance.
-        '''
 
+        References
+        ----------
+        .. [1] Weinberg, 1972, pp 420-424; Weedman, 1986, pp 421-424.
+        .. [2] Weedman, D. (1986). Quasar astronomy, pp 65-67.
+        .. [3] Peebles, P. (1993). Principles of Physical Cosmology, pp 325-327.
+        '''
         z_1 = aszarr(z_1)
         z_2 = aszarr(z_2)
         z_1, z_2 = self._ordering(z_1, z_2)
@@ -496,15 +598,17 @@ class timescape:
             raise ValueError("Input redshifts must be the same length")
     
     def angular_diameter_distance_z1z2(self, z_1, z_2):
-        '''
+        '''Angular diameter distance between objects at 2 redshifts.
+
+        Useful for gravitational lensing, for example computing the angular
+        diameter distance between a lensed galaxy and the foreground lens.
+
         Parameters
         ----------
-        z_1: Array of floats
-            Redshift in CMB frame
-        z_2: Array of Floats
-            Redshift in CMB frame
+        z_1, z_2: Array of floats
+            Redshift in CMB frame, where z_2 > z_1. 
+            If entered in the wrong order, the function will reorder them.
 
-        Where z_2 > z_1.
         Returns
         -------
         distances: Float
@@ -514,7 +618,8 @@ class timescape:
         return self.angular_diameter_distance(z_1, z_2)
     
     def transverse_comoving_distance(self, zs, z_2 = 0):
-        '''
+        '''Comoving transverse distance in Mpc at a given redshift.
+
         Parameters
         ----------
         zs : Array of floats
@@ -525,14 +630,17 @@ class timescape:
         distances: Float
             Transverse Comoving Distance.
         '''
-
         zs = aszarr(zs)
 
         dist = self.angular_diameter_distance(zs, z_2) * (1+zs)
         return Quantity(dist, unit=u.Mpc )
     
     def luminosity_distance(self, zs, z_2  = 0):
-        '''
+        '''Luminosity distance in Mpc at redshift ``z``.
+
+        This is the distance to use when converting between the bolometric flux
+        from an object at redshift ``z`` and its bolometric luminosity [1]_.
+
         Parameters
         ----------
         zs : Array of floats
@@ -542,17 +650,23 @@ class timescape:
         -------
         distances: Float
             Luminosity Distance.
+
+         References
+        ----------
+        .. [1] Weinberg, 1972, pp 420-424; Weedman, 1986, pp 60-62.
         '''
-        
         zs = aszarr(zs)
 
         dist = self.angular_diameter_distance(zs, z_2) * (1+zs)**2
         return Quantity(dist, unit=u.Mpc)
+    
+
 
 if __name__ == '__main__':
-    H0 = 61.7 # dressed H0 value
-    fv0 = 0.695 # Void Fraction at present time
-    ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
+    # H0 = 61.7 # dressed H0 value
+    # fv0 = 0.695 # Void Fraction at present time
+    # ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
+    ts = timescape()
     
     print("test distance = ", ts.angular_diameter_distance([3], [1]))
     print("test distance = ", ts.angular_diameter_distance([1], [3]))
