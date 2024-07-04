@@ -660,6 +660,33 @@ class timescape:
         dist = self.angular_diameter_distance(zs, z_2) * (1+zs)**2
         return Quantity(dist, unit=u.Mpc)
     
+    def distmod(self, z):
+        """Distance modulus at redshift ``z``.
+
+        The distance modulus is defined as the (apparent magnitude - absolute
+        magnitude) for an object at redshift ``z``.
+
+        Parameters
+        ----------
+        z : Quantity-like ['redshift'], array-like, or `~numbers.Number`
+            Input redshift.
+
+        Returns
+        -------
+        distmod : `~astropy.units.Quantity` ['length']
+            Distance modulus at each input redshift, in magnitudes.
+
+        See Also
+        --------
+        z_at_value : Find the redshift corresponding to a distance modulus.
+        """
+        # Remember that the luminosity distance is in Mpc
+        # Abs is necessary because in certain obscure closed cosmologies
+        #  the distance modulus can be negative -- which is okay because
+        #  it enters as the square.
+        val = 5.0 * np.log10(abs(self.luminosity_distance(z).value)) + 25.0
+        return u.Quantity(val, u.mag)
+    
 
 
 if __name__ == '__main__':
