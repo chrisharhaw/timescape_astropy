@@ -505,27 +505,6 @@ class timescape:
         term2 = (self.b**(1/3.) /6.)*np.log( (t**(1/3.) + self.b**(1/3.))**2 / (-self.b**(1/3.)*t**(1/3.) + self.b**(2/3.) + t**(2/3.)) )
         term3 = (self.b**(1/3.)/np.sqrt(3)) * np.arctan( (2*t**(1/3.) - self.b**(1/3.)) / (np.sqrt(3) * self.b**(1/3.)) )
         return term1 + term2 + term3
-    
-    def _array_dist(self, z, z_2 = 0):
-        '''
-        Parameters
-        ----------
-        z : Array of floats
-            Redshift in CMB frame.
-        z_2 : Array of floats
-            Redshift in CMB frame.
-
-        Returns
-        -------
-        Float
-            Array Distance.
-        '''
-        if isinstance(z_2, (int, float)):
-            t = self._tex(z)
-            distance = (const.c.to('km/s').value * t**(2/3.) * (self._F(z_2) - self._F(z)) ) * u.Mpc
-            return distance
-        else:
-            raise ValueError("Second redshift must be a float")
         
     def _ordering(self, z_1_temp, z_2_temp):
 
