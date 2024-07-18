@@ -128,6 +128,11 @@ class timescape:
             self.age = self.wall_time(0)
             self.T0 = self.T0_dressed
 
+
+    def hubble_distance(self):
+        """Hubble distance as `~astropy.units.Quantity`."""
+        return (const.c / self.H0_dressed).to(u.Mpc)
+
     #Energy densities for dressed and bare parameters
     def Om_bare(self, z):
         '''
@@ -530,7 +535,7 @@ class timescape:
             return z_1, z_2
 
     def angular_diameter_distance(self, z_2, z_1 =0): 
-        '''Angular diameter distance in Mpc at a given redshift.
+        '''Effective angular diameter distance in Mpc at a given redshift.
 
         This gives the proper (sometimes called 'physical') transverse
         distance corresponding to an angle of 1 radian for an object
@@ -575,7 +580,7 @@ class timescape:
             raise ValueError("Input redshifts must be the same length")
     
     def angular_diameter_distance_z1z2(self, z_1, z_2):
-        '''Angular diameter distance between objects at 2 redshifts.
+        '''Effective Angular diameter distance between objects at 2 redshifts.
 
         Useful for gravitational lensing, for example computing the angular
         diameter distance between a lensed galaxy and the foreground lens.
@@ -595,7 +600,7 @@ class timescape:
         return self.angular_diameter_distance(z_1, z_2)
     
     def transverse_comoving_distance(self, zs, z_2 = 0):
-        '''Comoving transverse distance in Mpc at a given redshift.
+        '''Effective comoving transverse distance in Mpc at a given redshift.
 
         Parameters
         ----------
@@ -613,7 +618,7 @@ class timescape:
         return Quantity(dist, unit=u.Mpc )
     
     def luminosity_distance(self, zs, z_2  = 0):
-        '''Luminosity distance in Mpc at redshift ``z``.
+        '''Dressed luminosity distance in Mpc at redshift ``z``.
 
         This is the distance to use when converting between the bolometric flux
         from an object at redshift ``z`` and its bolometric luminosity [1]_.
@@ -665,12 +670,95 @@ class timescape:
         return u.Quantity(val, u.mag)
     
 
+    ########## Functions for compatibility with astropy.cosmology.flrw.base.py ##########
+    # These functions are created so that parameters can be called in the exact same way as they can for flrw models.
+    # It is important to note that the parameters are not the same as the FLRW models, but the functions are
+    # the dressed parameters which are the parameters that a wall observer would infer when trying to fit an FLRW model to the universe.
+
+    def H(self, z):
+        """Dressed hubble parameter (km/s/Mpc) at redshift ``z``.
+
+        Parameters
+        ----------
+        z : Quantity-like ['redshift'], array-like, or `~numbers.Number`
+            Input redshift.
+
+        Returns
+        -------
+        H : `~astropy.units.Quantity` ['frequency']
+            Hubble parameter at each input redshift.
+        """
+        return self.H_dressed(z)
+    
+    def Om(self, z):
+        """Dressed density parameter for non-relativistic matter at redshift ``z``.
+
+        Parameters
+        ----------
+        z : Quantity-like ['redshift'], array-like, or `~numbers.Number`
+            Input redshift.
+
+        Returns
+        -------
+        Om : ndarray or float
+            The dressed density of non-relativistic matter at each input redshift.
+            Returns `float` if the input is scalar.
+        """
+        return self.Om_dressed(z)
+    
+    def Ok(self, z):
+        """Dressed density parameter for spatial curvature at redshift ``z``.
+
+        Parameters
+        ----------
+        z : Quantity-like ['redshift'], array-like, or `~numbers.Number`
+            Input redshift.
+
+        Returns
+        -------
+        Ok : ndarray or float
+            The dressed density of spatial curvature at each input redshift.
+            Returns `float` if the input is scalar.
+        """
+        return self.Ok_dressed(z)
+    
+    def OQ(self, z):
+        '''Dressed backreaction density parameter at redshift ``z``.
+        Parameters
+        ----------
+        z : array of floats
+            Redshift in CMB frame.
+        
+        Returns
+        -------
+        Float   
+            Backreaction Energy Density Parameter (dressed)
+        '''
+        return self.OQ_dressed(z)
+    
+    def scale_factor(self,z):
+        '''Dressed scale factor at redshift ``z``.
+
+        The dressed scale factor at the present time is chosen to be 'a_0 = 1'. 
+        The dressed scale factor is related to the bare scale factor by the lapse function.
+
+        Parameters
+        ----------
+        z : Array of floats
+            Redshift in CMB frame.
+        
+        Returns
+        -------
+            Dressed Scale Factor (setting a_dressed(0) = 1).
+        '''
+        
+        return self.scale_factor_dressed(z)
 
 if __name__ == '__main__':
     # H0 = 61.7 # dressed H0 value
     # fv0 = 0.695 # Void Fraction at present time
     # ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
-    ts = timescape()
+    ts = timescape() # Initialise TS class
     
     print("test distance = ", ts.angular_diameter_distance([3], [1]))
     print("test distance = ", ts.angular_diameter_distance([1], [3]))
