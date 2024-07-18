@@ -13,4 +13,4 @@ References:
 - [3] D. L. Wiltshire (2009) "Average observational quantities in the timescape cosmology" https://doi.org/10.1103/PhysRevD.80.123512
 - [4] Duley, J. A. G. et al. (2013) "Timescape cosmology with radiation fluid" http://arxiv.org/abs/1306.3208
 - [5] Dam, L. H. et al. (2017) "Apparent cosmic accleration from type Ia supernovae http://arxiv.org/abs/1706.07236
-- [6] Lane Z. G. et al. (2023) "cosmological foundations revisited with Pantheon+" http://arxiv.org/abs/2311.01438
+- [6] Lane Z. G. et al. (2023) "Cosmological foundations revisited with Pantheon+" http://arxiv.org/abs/2311.01438
