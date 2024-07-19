@@ -12,7 +12,7 @@ from scipy import integrate,optimize
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve, root_scalar
 
-#from astropy.cosmology._utils import aszarr
+# from astropy.cosmology import aszarr
 # from . import units as cu
 from astropy.cosmology import units as cu
 from astropy import units as u
