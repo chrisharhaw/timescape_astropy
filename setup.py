@@ -12,9 +12,7 @@ setup(
         'numpy',
         'scipy', 
         'astropy', 
-        'matplotlib'
+        'matplotlib',
         'scipy',
-        'numbers',
-        'math',
         'astropy'],
     )
