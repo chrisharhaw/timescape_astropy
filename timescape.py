@@ -57,7 +57,7 @@ def aszarr(z):
     return Quantity(z, cu.redshift).value
 
 class timescape:
-    def __init__(self, fv0 = 0.695, H0 = 61.7, H0_type = 'dressed', T0 = 2.725 * u.K):
+    def __init__(self, fv0 = None, H0 = 61.7, H0_type = 'dressed', T0 = 2.725 * u.K, default = 'sne'):
         '''The tracker solution of the timescape cosmology. A solution of the averaged Einstein 
         equations with backreaction that explains the accelerated expansion of the universe without the
         need for dark energy.
@@ -84,7 +84,16 @@ class timescape:
         [3] Duley, J. A. G. et al. (2013) "Timescape cosmology with radiation fluid" ArXiV: 1306.3208
         '''
         #Void Fraction at Present Time
-        self.fv0 = fv0  
+
+        if (fv0 is None) & (default.lower() == 'sne'):
+            self.fv0 = 0.716
+        elif (fv0 is None) & (default.lower() == 'cmb'):
+            self.fv0 = 0.695
+        elif (fv0 is None):
+            print("No default value for fv0 provided. Choosing default value of 0.716")
+            self.fv0 = 0.716
+        else:
+            self.fv0 = fv0
 
         if H0_type.lower() == 'bare':
             self.H0_bare = H0 * u.km / (u.s * u.Mpc)
@@ -564,11 +573,10 @@ class timescape:
         z_1, z_2 = self._ordering(z_1, z_2)
         t = self._tex(z_2)
 
-        if isinstance(z_2, (int, float)):
+        if len(z_2) == len(z_1):
             distance = (const.c.to('km/s').value * t**(2/3.) * (self._F(z_1) - self._F(z_2)) ) 
-            return Quantity(distance, unit=u.Mpc)
-        elif len(z_2) == len(z_1):
-            distance = (const.c.to('km/s').value * t**(2/3.) * (self._F(z_1) - self._F(z_2)) ) 
+            if len(z_2) == 1:
+                return distance[0] * u.Mpc
             return Quantity(distance, unit=u.Mpc)
         elif len(z_2) == 1:
             distance = (const.c.to('km/s').value * t**(2/3.) * (self._F(z_1) - self._F(z_2[0])) ) 
@@ -764,7 +772,7 @@ if __name__ == '__main__':
     print("test distance = ", ts.angular_diameter_distance([1], [3]))
     print("test distance = ", ts.angular_diameter_distance([1,2], [3]))
     print("test distance = ", ts.angular_diameter_distance([1], [3,2]))
-    
+    print("test distance = ", ts.angular_diameter_distance(1))
    
 
  
