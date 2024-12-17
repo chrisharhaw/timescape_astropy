@@ -762,17 +762,17 @@ class timescape:
         
         return self.scale_factor_dressed(z)
 
-if __name__ == '__main__':
-    # H0 = 61.7 # dressed H0 value
-    # fv0 = 0.695 # Void Fraction at present time
-    # ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
-    ts = timescape() # Initialise TS class
+# if __name__ == '__main__':
+#     # H0 = 61.7 # dressed H0 value
+#     # fv0 = 0.695 # Void Fraction at present time
+#     # ts = timescape(fv0=fv0, H0=H0) # Initialise TS class
+#     ts = timescape() # Initialise TS class
     
-    print("test distance = ", ts.angular_diameter_distance([3], [1]))
-    print("test distance = ", ts.angular_diameter_distance([1], [3]))
-    print("test distance = ", ts.angular_diameter_distance([1,2], [3]))
-    print("test distance = ", ts.angular_diameter_distance([1], [3,2]))
-    print("test distance = ", ts.angular_diameter_distance(1))
+#     # print("test distance = ", ts.angular_diameter_distance([3], [1]))
+#     # print("test distance = ", ts.angular_diameter_distance([1], [3]))
+#     # print("test distance = ", ts.angular_diameter_distance([1,2], [3]))
+#     # print("test distance = ", ts.angular_diameter_distance([1], [3,2]))
+#     print("test distance = ", ts.luminosity_distance(1))
    
 
  
