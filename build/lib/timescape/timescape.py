@@ -56,7 +56,7 @@ def aszarr(z):
     # not one of the preferred types: Number / array ducktype
     return Quantity(z, cu.redshift).value
 
-class timescape:
+class Timescape:
     def __init__(self, fv0 = None, H0 = 61.7, H0_type = 'dressed', T0 = 2.725 * u.K, default = 'sne'):
         '''The tracker solution of the timescape cosmology. A solution of the averaged Einstein 
         equations with backreaction that explains the accelerated expansion of the universe without the
@@ -137,10 +137,10 @@ class timescape:
             self.age = self.wall_time(0)
             self.T0 = self.T0_dressed
 
-
     def hubble_distance(self):
         """Hubble distance as `~astropy.units.Quantity`."""
-        return (const.c / self.H0_dressed).to(u.Mpc)
+
+        return (const.c.to('km/s') / self.H0_dressed).to(u.Mpc)
 
     #Energy densities for dressed and bare parameters
     def Om_bare(self, z):
