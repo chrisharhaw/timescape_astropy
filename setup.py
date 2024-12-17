@@ -14,7 +14,5 @@ setup(
         'astropy', 
         'matplotlib',
         'scipy',
-        # 'numbers',
-        # 'math',
         'astropy'],
     )
