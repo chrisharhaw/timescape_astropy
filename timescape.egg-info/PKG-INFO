@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: timescape
+Version: 1.0.1
+Summary: A package for using the Timescape cosmology
+Author: Christopher Harvey-Hawes
+Author-email: christopher.harvey-hawes@pg.canterbury.ac.nz
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: astropy
+Requires-Dist: matplotlib
+Requires-Dist: scipy
+Requires-Dist: astropy
