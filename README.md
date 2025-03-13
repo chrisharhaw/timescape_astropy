@@ -14,3 +14,9 @@ References:
 - [4] Duley, J. A. G. et al. (2013) "Timescape cosmology with radiation fluid" http://arxiv.org/abs/1306.3208
 - [5] Dam, L. H. et al. (2017) "Apparent cosmic accleration from type Ia supernovae http://arxiv.org/abs/1706.07236
 - [6] Lane Z. G. et al. (2023) "Cosmological foundations revisited with Pantheon+" http://arxiv.org/abs/2311.01438
+
+Install:
+
+-- git clone https://github.com/ZacharyLane1204/timescape_astropy/
+-- Change directory into where it was cloned
+-- pip install .
