@@ -532,8 +532,8 @@ class Timescape:
     def _order_output(self, z_1_temp, z_2_temp, verbose = True):
             z_1 = np.minimum(z_1_temp, z_2_temp)  # Take the lower values
             z_2 = np.maximum(z_1_temp, z_2_temp)  # Take the higher values
-            if not np.array_equal(z_1, z_1_temp) & verbose:
-                print("Reordering inputs to make z_1 < z_2.")
+            # if not np.array_equal(z_1, z_1_temp) & verbose:
+            #     print("Reordering inputs to make z_1 < z_2.")
 
             # Find indices where z_1 and z_2 are different
             indices = np.where(z_1 != z_2)
