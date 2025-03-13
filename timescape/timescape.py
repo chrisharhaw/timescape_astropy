@@ -86,12 +86,12 @@ class Timescape:
         #Void Fraction at Present Time
 
         if (fv0 is None) & (default.lower() == 'sne'):
-            self.fv0 = 0.716
+            self.fv0 = 0.737
         elif (fv0 is None) & (default.lower() == 'cmb'):
             self.fv0 = 0.695
         elif (fv0 is None):
             print("No default value for fv0 provided. Choosing default value of 0.716")
-            self.fv0 = 0.716
+            self.fv0 = 0.737
         else:
             self.fv0 = fv0
 

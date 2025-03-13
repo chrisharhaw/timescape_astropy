@@ -762,6 +762,25 @@ class Timescape:
         
         return self.scale_factor_dressed(z)
 
+    def redshift_from_luminosity_distance(self, dist):
+        """Redshift corresponding to a given luminosity distance.
+
+        Parameters
+        ----------
+        dist : Quantity-like ['length']
+            Luminosity distance.
+
+        Returns
+        -------
+        z : `~astropy.units.Quantity` ['redshift']
+            Redshift corresponding to the input luminosity distance.
+        """
+        # Convert to Mpc
+        if isinstance(dist, u.Quantity):
+            dist = dist.to(u.Mpc).value
+        # Find the redshift
+        z = fsolve(lambda z: self.luminosity_distance(z).value - dist, 0.1)
+        return u.Quantity(z, u.dimensionless_unscaled)
 # if __name__ == '__main__':
 #     # H0 = 61.7 # dressed H0 value
 #     # fv0 = 0.695 # Void Fraction at present time
