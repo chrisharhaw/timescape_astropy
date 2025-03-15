@@ -86,12 +86,12 @@ class Timescape:
         #Void Fraction at Present Time
 
         if (fv0 is None) & (default.lower() == 'sne'):
-            self.fv0 = 0.716
+            self.fv0 = 0.737
         elif (fv0 is None) & (default.lower() == 'cmb'):
             self.fv0 = 0.695
         elif (fv0 is None):
             print("No default value for fv0 provided. Choosing default value of 0.716")
-            self.fv0 = 0.716
+            self.fv0 = 0.737
         else:
             self.fv0 = fv0
 
@@ -532,8 +532,8 @@ class Timescape:
     def _order_output(self, z_1_temp, z_2_temp, verbose = True):
             z_1 = np.minimum(z_1_temp, z_2_temp)  # Take the lower values
             z_2 = np.maximum(z_1_temp, z_2_temp)  # Take the higher values
-            if not np.array_equal(z_1, z_1_temp) & verbose:
-                print("Reordering inputs to make z_1 < z_2.")
+            # if not np.array_equal(z_1, z_1_temp) & verbose:
+            #     print("Reordering inputs to make z_1 < z_2.")
 
             # Find indices where z_1 and z_2 are different
             indices = np.where(z_1 != z_2)
@@ -762,6 +762,25 @@ class Timescape:
         
         return self.scale_factor_dressed(z)
 
+    def redshift_from_luminosity_distance(self, dist):
+        """Redshift corresponding to a given luminosity distance.
+
+        Parameters
+        ----------
+        dist : Quantity-like ['length']
+            Luminosity distance.
+
+        Returns
+        -------
+        z : `~astropy.units.Quantity` ['redshift']
+            Redshift corresponding to the input luminosity distance.
+        """
+        # Convert to Mpc
+        if isinstance(dist, u.Quantity):
+            dist = dist.to(u.Mpc).value
+        # Find the redshift
+        z = fsolve(lambda z: self.luminosity_distance(z).value - dist, 0.1)
+        return u.Quantity(z, u.dimensionless_unscaled)
 # if __name__ == '__main__':
 #     # H0 = 61.7 # dressed H0 value
 #     # fv0 = 0.695 # Void Fraction at present time

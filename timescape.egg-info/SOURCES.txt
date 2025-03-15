@@ -1,5 +1,6 @@
 README.md
 setup.py
+tests/test_timescape.py
 timescape/__init__.py
 timescape/timescape.py
 timescape.egg-info/PKG-INFO

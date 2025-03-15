@@ -1,3 +1,5 @@
+from .timescape import * 
+
 __version__='1.0.1'
 __author__='Christopher Harvey-Hawes'
 __email__='christopher.harvey-hawes@pg.canterbury.ac.nz'
